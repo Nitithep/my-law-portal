@@ -4,14 +4,14 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
-export async function addComment(sectionId: string, content: string) {
+export async function addComment(sectionId: string, content: string, images: string[] = []) {
     const session = await auth();
     if (!session?.user?.id) {
         throw new Error("กรุณาเข้าสู่ระบบก่อนแสดงความคิดเห็น");
     }
 
-    if (!content.trim()) {
-        throw new Error("กรุณากรอกความคิดเห็น");
+    if (!content.trim() && images.length === 0) {
+        throw new Error("กรุณากรอกความคิดเห็นหรือแนบรูปภาพ");
     }
 
     await prisma.comment.create({
@@ -19,6 +19,7 @@ export async function addComment(sectionId: string, content: string) {
             content: content.trim(),
             userId: session.user.id,
             sectionId,
+            images: images,
         },
     });
 

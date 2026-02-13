@@ -19,7 +19,7 @@ export default async function DraftDetailPage({ params }: PageProps) {
             sections: {
                 include: {
                     votes: {
-                        select: { type: true, userId: true },
+                        select: { type: true },
                     },
                     comments: {
                         include: {
@@ -287,23 +287,21 @@ export default async function DraftDetailPage({ params }: PageProps) {
                 </>
             ) : (
                 <>
-                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40 transform translate-y-0 transition-transform md:hidden">
-                        <button className="w-full bg-[#2b9e76] hover:bg-[#249068] text-white font-medium py-3 rounded-xl shadow-sm flex items-center justify-center gap-2">
+                    {/* Mobile Footer */}
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40 md:hidden flex justify-between gap-4 items-center">
+                        <div>
+                            <p className="text-xs text-gray-500">เหลือเวลาอีก</p>
+                            <p className="text-[#1a3c7b] font-bold">{daysRemaining} วัน</p>
+                        </div>
+                        <Link href="#survey" className="flex-1 bg-[#1a3c7b] hover:bg-[#15325f] text-white font-medium py-3 rounded-xl shadow-sm flex items-center justify-center gap-2">
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            อ่านสรุปผลการรับฟัง
-                        </button>
+                            ร่วมแสดงความคิดเห็น
+                        </Link>
                     </div>
 
-                    <div className="hidden md:block fixed bottom-0 left-0 right-0 bg-[#2b9e76] text-white py-3 px-6 text-center shadow-lg z-40 cursor-pointer hover:bg-[#249068] transition-colors">
-                        <span className="font-medium flex items-center justify-center gap-2">
-                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            อ่านสรุปผลการรับฟัง
-                        </span>
-                    </div>
+                    {/* Desktop Footer (Hidden for now as it duplicates buttons in tabs) */}
                 </>
             )}
 

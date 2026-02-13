@@ -1,9 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
-import { updateLawDraft, addSection, deleteSection } from "@/actions/admin-actions";
+import { SurveyResponseTable } from "@/components/admin/SurveyResponseTable";
+import { AdminCommentList } from "@/components/admin/AdminCommentList";
+import {
+    updateLawDraft,
+    addSection,
+    deleteSection,
+    updateSection,
+    addSurveyQuestion,
+    updateSurveyQuestion,
+    deleteSurveyQuestion,
+} from "@/actions/admin-actions";
 
 type DraftData = {
     id: string;
@@ -23,22 +33,43 @@ type DraftData = {
         content: string;
         _count?: { votes: number; comments: number };
     }[];
+    surveyQuestions: {
+        id: string;
+        question: string;
+        order: number;
+        _count?: { responses: number };
+    }[];
 };
 
 const tabs = [
     { id: "info", label: "ข้อมูลทั่วไป", icon: "📋" },
     { id: "sections", label: "มาตรา", icon: "📄" },
+    { id: "survey", label: "แบบสอบถาม", icon: "📊" },
+    { id: "responses", label: "รายการผู้ตอบ", icon: "👥" },
+    { id: "comments", label: "ความคิดเห็น", icon: "💬" },
     { id: "summary", label: "สรุปผลรับฟัง", icon: "📝" },
-    { id: "stats", label: "สถิติ", icon: "📊" },
+    { id: "stats", label: "สถิติ", icon: "📈" },
 ];
 
 export default function EditDraftPage() {
     const router = useRouter();
     const params = useParams();
+    const searchParams = useSearchParams();
+
     const [draft, setDraft] = useState<DraftData | null>(null);
     const [isPending, setIsPending] = useState(false);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("info");
+
+    useEffect(() => {
+        const tab = searchParams.get("tab");
+        if (tab && tabs.some(t => t.id === tab)) {
+            setActiveTab(tab);
+        }
+    }, [searchParams]);
+
+    // We can't use useSearchParams easily if we didn't suspect it before.
+    // Let's import it.
     const [editingSection, setEditingSection] = useState<string | null>(null);
     const [editContent, setEditContent] = useState("");
     const [newSectionNo, setNewSectionNo] = useState("");
@@ -46,21 +77,28 @@ export default function EditDraftPage() {
     const [showAddSection, setShowAddSection] = useState(false);
     const [saveMessage, setSaveMessage] = useState("");
 
-    useEffect(() => {
-        async function loadDraft() {
-            const res = await fetch(`/api/admin/drafts/${params.id}`);
-            if (res.ok) {
-                const data = await res.json();
-                setDraft(data);
-            }
-            setLoading(false);
+    // Survey Question State
+    const [showAddQuestion, setShowAddQuestion] = useState(false);
+    const [newQuestion, setNewQuestion] = useState("");
+    const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
+    const [editQuestionText, setEditQuestionText] = useState("");
+
+    async function loadDraft() {
+        // Add cache: 'no-store' to ensure fresh data
+        const res = await fetch(`/api/admin/drafts/${params.id}`, { cache: 'no-store' });
+        if (res.ok) {
+            const data = await res.json();
+            setDraft(data);
         }
+        setLoading(false);
+    }
+
+    useEffect(() => {
         loadDraft();
     }, [params.id]);
 
     const reload = async () => {
-        const res = await fetch(`/api/admin/drafts/${params.id}`);
-        if (res.ok) setDraft(await res.json());
+        await loadDraft();
     };
 
     if (loading) {
@@ -136,8 +174,61 @@ export default function EditDraftPage() {
     };
 
     const handleDeleteSection = async (sectionId: string) => {
+        if (!confirm("คุณแน่ใจหรือไม่ว่าจะลบมาตรานี้?")) return;
         await deleteSection(sectionId);
         await reload();
+    };
+
+    const handleUpdateSection = async () => {
+        if (!editingSection || !editContent.trim()) return;
+        try {
+            await updateSection(editingSection, editContent);
+            setEditingSection(null);
+            await reload();
+        } catch (error) {
+            alert("เกิดข้อผิดพลาดในการบันทึกมาตรา");
+        }
+    };
+
+    const handleAddQuestion = async () => {
+        if (!newQuestion.trim()) return;
+        try {
+            await addSurveyQuestion(draft.id, {
+                question: newQuestion,
+                order: (draft.surveyQuestions?.length || 0) + 1,
+            });
+            setNewQuestion("");
+            setShowAddQuestion(false);
+            await reload();
+        } catch (error) {
+            alert("เกิดข้อผิดพลาดในการเพิ่มคำถาม");
+        }
+    };
+
+    const handleUpdateQuestion = async () => {
+        if (!editingQuestion || !editQuestionText.trim()) return;
+        try {
+            // Find current order
+            const currentQ = draft.surveyQuestions?.find(q => q.id === editingQuestion);
+            await updateSurveyQuestion(editingQuestion, {
+                question: editQuestionText,
+                order: currentQ?.order || 0,
+            });
+            setEditingQuestion(null);
+            await reload();
+        } catch (error) {
+            alert("เกิดข้อผิดพลาดในการบันทึกคำถาม");
+        }
+    };
+
+    const handleDeleteQuestion = async (questionId: string) => {
+        if (!confirm("คุณแน่ใจหรือไม่ว่าจะลบคำถามนี้? ข้อมูลคำตอบทั้งหมดจะถูกลบไปด้วย")) return;
+        try {
+            await deleteSurveyQuestion(questionId);
+            await reload();
+        } catch (error) {
+            alert("เกิดข้อผิดพลาดในการลบคำถาม");
+        }
     };
 
     const totalVotes = draft.sections.reduce(
@@ -199,6 +290,15 @@ export default function EditDraftPage() {
                                 เปิดรับฟัง
                             </>
                         )}
+                    </button>
+                    <button
+                        onClick={reload}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors shadow-sm"
+                    >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh Data
                     </button>
                 </div>
             </div>
@@ -434,10 +534,7 @@ export default function EditDraftPage() {
                                                     ยกเลิก
                                                 </button>
                                                 <button
-                                                    onClick={() => {
-                                                        // TODO: implement section content update
-                                                        setEditingSection(null);
-                                                    }}
+                                                    onClick={handleUpdateSection}
                                                     className="px-3 py-1.5 text-xs font-semibold text-white bg-[#1a3c7b] rounded-lg"
                                                 >
                                                     บันทึก
@@ -454,6 +551,154 @@ export default function EditDraftPage() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {/* Tab: survey */}
+                {activeTab === "survey" && (
+                    <div className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <p className="text-sm text-gray-500">
+                                {draft.surveyQuestions?.length || 0} คำถาม
+                            </p>
+                            <button
+                                onClick={() => setShowAddQuestion(!showAddQuestion)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors"
+                            >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                เพิ่มคำถาม
+                            </button>
+                        </div>
+
+                        {/* Add Question Form */}
+                        {showAddQuestion && (
+                            <div className="mb-4 p-4 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/50 space-y-3">
+                                <label className="block text-xs font-semibold text-gray-700">คำถามใหม่</label>
+                                <input
+                                    placeholder="เช่น ท่านเห็นด้วยกับ..."
+                                    value={newQuestion}
+                                    onChange={(e) => setNewQuestion(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white outline-none focus:border-blue-400"
+                                />
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() => setShowAddQuestion(false)}
+                                        className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700"
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        onClick={handleAddQuestion}
+                                        className="px-3 py-1.5 text-xs font-semibold text-white bg-[#1a3c7b] rounded-lg hover:bg-[#15325f]"
+                                    >
+                                        เพิ่ม
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Question List */}
+                        <div className="space-y-2">
+                            {draft.surveyQuestions?.map((question, idx) => (
+                                <div
+                                    key={question.id}
+                                    className="group rounded-xl border border-gray-100 hover:border-blue-200 transition-colors overflow-hidden"
+                                >
+                                    <div className="flex items-center justify-between px-4 py-3 bg-white">
+                                        <div className="flex items-center gap-3 flex-1">
+                                            <span className="h-6 w-6 rounded-md bg-gray-100 text-gray-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                                                {idx + 1}
+                                            </span>
+                                            {editingQuestion === question.id ? (
+                                                <input
+                                                    value={editQuestionText}
+                                                    onChange={(e) => setEditQuestionText(e.target.value)}
+                                                    className="flex-1 px-2 py-1 border border-blue-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <span className="text-sm font-medium text-gray-800 line-clamp-1">
+                                                    {question.question}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex items-center gap-2 pl-4">
+                                            {question._count && (
+                                                <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-100 whitespace-nowrap shadow-sm">
+                                                    {question._count.responses} ตอบกลับ
+                                                </span>
+                                            )}
+
+                                            {editingQuestion === question.id ? (
+                                                <div className="flex items-center gap-1">
+                                                    <button
+                                                        onClick={() => setEditingQuestion(null)}
+                                                        className="p-1.5 text-gray-400 hover:text-gray-600"
+                                                    >
+                                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={handleUpdateQuestion}
+                                                        className="p-1.5 text-blue-600 hover:text-blue-800"
+                                                    >
+                                                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingQuestion(question.id);
+                                                            setEditQuestionText(question.question);
+                                                        }}
+                                                        className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                    >
+                                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteQuestion(question.id)}
+                                                        className="h-7 w-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50"
+                                                    >
+                                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {(!draft.surveyQuestions || draft.surveyQuestions.length === 0) && (
+                                <div className="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-100 rounded-xl">
+                                    ยังไม่มีคำถามแบบสอบถาม
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Tab: responses */}
+
+                {activeTab === "responses" && (
+                    <div className="p-6">
+                        <SurveyResponseTable draftId={draft.id} />
+                    </div>
+                )}
+
+                {/* Tab: comments */}
+                {activeTab === "comments" && (
+                    <div className="p-6">
+                        <AdminCommentList draftId={draft.id} />
                     </div>
                 )}
 

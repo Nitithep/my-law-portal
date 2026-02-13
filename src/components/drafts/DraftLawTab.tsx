@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { VoteButtons } from "@/components/VoteButtons";
+import { CommentSection } from "@/components/CommentSection";
+import { Separator } from "@/components/ui/separator";
 
 type Attachment = {
     id: string;
@@ -12,15 +15,24 @@ type Section = {
     id: string;
     sectionNo: string;
     content: string;
+    votes: { type: "AGREE" | "DISAGREE" }[];
+    comments: {
+        id: string;
+        content: string;
+        createdAt: Date;
+        user: { name: string | null; image: string | null };
+        images?: string[];
+    }[];
 };
 
 type DraftLawTabProps = {
     draftTitle: string;
     sections: Section[];
     attachments: Attachment[];
+    isOpen?: boolean; // Added isOpen to props
 };
 
-export function DraftLawTab({ draftTitle, sections, attachments }: DraftLawTabProps) {
+export function DraftLawTab({ draftTitle, sections, attachments, isOpen = true }: DraftLawTabProps) {
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
     const toggleSection = (id: string) => {
@@ -43,6 +55,9 @@ export function DraftLawTab({ draftTitle, sections, attachments }: DraftLawTabPr
             <div className="space-y-3">
                 {sections.map((section) => {
                     const isExpanded = expandedSections.has(section.id);
+                    const agreeCount = section.votes.filter((v) => v.type === "AGREE").length;
+                    const disagreeCount = section.votes.filter((v) => v.type === "DISAGREE").length;
+
                     return (
                         <div
                             key={section.id}
@@ -63,7 +78,7 @@ export function DraftLawTab({ draftTitle, sections, attachments }: DraftLawTabPr
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                                     </svg>
                                     <span className="text-sm text-[#1a3c7b] font-medium leading-relaxed">
-                                        {draftTitle}
+                                        {draftTitle} (มาตรา {section.sectionNo})
                                     </span>
                                 </div>
                             </button>
@@ -81,6 +96,25 @@ export function DraftLawTab({ draftTitle, sections, attachments }: DraftLawTabPr
                                                 {section.content}
                                             </p>
                                         </div>
+
+                                        {/* Voting Section */}
+                                        <div className="mt-4">
+                                            <VoteButtons
+                                                sectionId={section.id}
+                                                agreeCount={agreeCount}
+                                                disagreeCount={disagreeCount}
+                                                isOpen={isOpen}
+                                            />
+                                        </div>
+
+                                        <Separator className="my-4" />
+
+                                        {/* Comment Section */}
+                                        <CommentSection
+                                            sectionId={section.id}
+                                            comments={section.comments}
+                                            isOpen={isOpen}
+                                        />
                                     </div>
                                 </div>
                             )}

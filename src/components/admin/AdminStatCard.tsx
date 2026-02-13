@@ -2,7 +2,7 @@ type AdminStatCardProps = {
     icon: React.ReactNode;
     label: string;
     value: number | string;
-    color: "blue" | "emerald" | "orange" | "purple" | "rose";
+    color: "blue" | "emerald" | "orange" | "purple" | "rose" | "teal";
     subtitle?: string;
 };
 
@@ -12,6 +12,7 @@ const colorClasses = {
     orange: "bg-orange-50 text-orange-600 border-orange-100",
     purple: "bg-purple-50 text-purple-600 border-purple-100",
     rose: "bg-rose-50 text-rose-600 border-rose-100",
+    teal: "bg-teal-50 text-teal-600 border-teal-100",
 };
 
 const iconBg = {
@@ -20,6 +21,7 @@ const iconBg = {
     orange: "bg-orange-100",
     purple: "bg-purple-100",
     rose: "bg-rose-100",
+    teal: "bg-teal-100",
 };
 
 export function AdminStatCard({

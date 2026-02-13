@@ -27,6 +27,14 @@ export async function GET(
                     },
                 },
             },
+            surveyQuestions: {
+                orderBy: { order: "asc" },
+                include: {
+                    _count: {
+                        select: { responses: true },
+                    },
+                },
+            },
         },
     });
 

@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/db";
 import { Suspense } from "react";
-import { HeroBanner } from "@/components/HeroBanner";
-import { SearchBar } from "@/components/SearchBar";
-import { FilterSidebar } from "@/components/FilterSidebar";
+import { LawHero } from "@/components/LawHero";
+import { LawSearchBar } from "@/components/LawSearchBar";
+import { LawFilterSidebar } from "@/components/LawFilterSidebar";
 import { DraftCard } from "@/components/DraftCard";
 
 type SearchParams = Promise<{
@@ -105,55 +105,46 @@ export default async function HomePage({
     getAgencies(),
   ]);
 
-  const openCount = drafts.filter((d) => d.status === "OPEN").length;
-
   return (
-    <div className="min-h-screen bg-[#f5f7fa]">
-      {/* Hero Banner */}
-      <HeroBanner />
-
-      {/* Search Bar */}
-      <Suspense fallback={<div className="h-32 bg-white animate-pulse" />}>
-        <SearchBar totalResults={drafts.length} />
-      </Suspense>
-
-      {/* Main Content Area */}
+    <div className="min-h-screen bg-white font-sans text-gray-900 pb-20">
       <div className="container mx-auto px-4 py-6">
-        <div className="flex gap-6">
-          {/* Left: Draft List */}
-          <div className="flex-1 min-w-0">
-            {/* Stats bar */}
-            <div className="flex items-center gap-4 mb-4">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-gray-200 text-xs text-gray-600">
-                <span className="h-2 w-2 rounded-full bg-[#2b9e76] animate-pulse" />
-                เปิดรับฟัง {openCount} โครงการ
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-gray-200 text-xs text-gray-600">
-                📊 ทั้งหมด {drafts.length} โครงการ
-              </div>
-            </div>
+        {/* Banner Section */}
+        <LawHero />
 
-            {/* Draft Cards */}
+        {/* Search Section */}
+        <Suspense fallback={<div className="h-32 bg-gray-50 rounded-2xl animate-pulse mb-10" />}>
+          <LawSearchBar />
+        </Suspense>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left: Draft List */}
+          <div className="lg:col-span-9 space-y-4">
             {drafts.length > 0 ? (
-              <div className="space-y-4">
-                {drafts.map((draft) => (
-                  <DraftCard
-                    key={draft.id}
-                    id={draft.id}
-                    title={draft.title}
-                    description={draft.description}
-                    agency={draft.agency}
-                    status={draft.status}
-                    startDate={draft.startDate}
-                    endDate={draft.endDate}
-                    sectionCount={draft._count.sections}
-                    voteCount={draft.totalVotes}
-                    commentCount={draft.totalComments}
-                  />
-                ))}
-              </div>
+              drafts.map((draft) => (
+                <DraftCard
+                  key={draft.id}
+                  id={draft.id}
+                  title={draft.title}
+                  description={draft.description}
+                  agency={draft.agency}
+                  status={draft.status}
+                  startDate={draft.startDate}
+                  endDate={draft.endDate}
+                  sectionCount={draft._count.sections}
+                  voteCount={draft.totalVotes}
+                  commentCount={draft.totalComments}
+                  // @ts-ignore
+                  category={draft.category}
+                  // @ts-ignore
+                  draftType={draft.draftType}
+                  // @ts-ignore
+                  hearingRound={draft.hearingRound}
+                  // @ts-ignore
+                  image={draft.image}
+                />
+              ))
             ) : (
-              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <div className="bg-gray-50 rounded-xl border border-dashed border-gray-200 p-12 text-center">
                 <div className="text-4xl mb-3">🔍</div>
                 <p className="text-gray-500 text-sm">
                   ไม่พบผลลัพธ์ที่ตรงกับการค้นหา
@@ -166,29 +157,21 @@ export default async function HomePage({
           </div>
 
           {/* Right: Filter Sidebar */}
-          <div className="hidden lg:block w-[280px] flex-shrink-0">
-            <div className="sticky top-20">
-              <Suspense
-                fallback={
-                  <div className="h-64 bg-white rounded-xl border border-gray-200 animate-pulse" />
-                }
-              >
-                <FilterSidebar agencies={agencies} />
-              </Suspense>
+          <div className="hidden lg:block lg:col-span-3">
+            <Suspense fallback={<div className="bg-white h-64 rounded-2xl border border-gray-100 animate-pulse" />}>
+              <LawFilterSidebar agencies={agencies} />
+            </Suspense>
 
-              {/* Additional Info Card */}
-              <div className="mt-4 bg-gradient-to-br from-[#1a3c7b] to-[#2b5ea7] rounded-xl p-4 text-white">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm font-semibold">เกี่ยวกับระบบ</span>
-                </div>
-                <p className="text-xs text-blue-100 leading-relaxed">
-                  ระบบกลางทางกฎหมาย เปิดให้ประชาชนร่วมแสดงความคิดเห็นต่อ
-                  ร่างกฎหมายได้ ตามมาตรา 77 ของรัฐธรรมนูญ
-                </p>
-              </div>
+            {/* Floating Action Button (Scroll to top) - Visual match */}
+            <div className="fixed bottom-8 right-8 z-40 hidden lg:block">
+              <button
+                className="h-12 w-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-[#1a3c7b] hover:bg-gray-50 transition-colors"
+                aria-label="Scroll to top"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>

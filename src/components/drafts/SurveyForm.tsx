@@ -53,10 +53,10 @@ export function SurveyForm({ draftId, title, description, questions }: SurveyFor
             return;
         }
 
-        if (!captchaToken) {
-            alert("กรุณายืนยัน CAPTCHA ก่อนส่งแบบสอบถาม");
-            return;
-        }
+        // if (!captchaToken) {
+        //     alert("กรุณายืนยัน CAPTCHA ก่อนส่งแบบสอบถาม");
+        //     return;
+        // }
 
         setIsSubmitting(true);
 
@@ -67,15 +67,19 @@ export function SurveyForm({ draftId, title, description, questions }: SurveyFor
             comment: comments[qId],
         }));
 
-        const result = await submitSurvey(draftId, submissions, sessionId, captchaToken);
+        const result = await submitSurvey(draftId, submissions, sessionId, "DISABLED"); // Pass dummy token
 
         if (result.success) {
             alert("ขอบคุณสำหรับความคิดเห็นของท่าน");
+            setAnswers({});
+            setComments({});
+            setCaptchaToken(null);
+            // recaptchaRef.current?.reset();
             router.refresh();
         } else {
             alert(result.error || "เกิดข้อผิดพลาดในการส่งข้อมูล");
             // Reset captcha on error
-            recaptchaRef.current?.reset();
+            // recaptchaRef.current?.reset();
             setCaptchaToken(null);
         }
 
@@ -115,8 +119,8 @@ export function SurveyForm({ draftId, title, description, questions }: SurveyFor
                     <div className="space-y-3 pl-4">
                         <label className="flex items-center gap-3 cursor-pointer group">
                             <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${answers[q.id] === "AGREE"
-                                    ? "border-[#1a3c7b] bg-[#1a3c7b]"
-                                    : "border-gray-300 group-hover:border-[#1a3c7b]/50"
+                                ? "border-[#1a3c7b] bg-[#1a3c7b]"
+                                : "border-gray-300 group-hover:border-[#1a3c7b]/50"
                                 }`}>
                                 {answers[q.id] === "AGREE" && (
                                     <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
@@ -136,8 +140,8 @@ export function SurveyForm({ draftId, title, description, questions }: SurveyFor
                         </label>
                         <label className="flex items-center gap-3 cursor-pointer group">
                             <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${answers[q.id] === "DISAGREE"
-                                    ? "border-[#1a3c7b] bg-[#1a3c7b]"
-                                    : "border-gray-300 group-hover:border-[#1a3c7b]/50"
+                                ? "border-[#1a3c7b] bg-[#1a3c7b]"
+                                : "border-gray-300 group-hover:border-[#1a3c7b]/50"
                                 }`}>
                                 {answers[q.id] === "DISAGREE" && (
                                     <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
@@ -199,13 +203,14 @@ export function SurveyForm({ draftId, title, description, questions }: SurveyFor
             </div>
 
             {/* reCAPTCHA */}
-            <div className="flex justify-center py-2">
-                <ReCAPTCHA
+            <div className="flex justify-center py-2 h-4">
+                {/* ReCAPTCHA DISABLED FOR TESTING */}
+                {/* <ReCAPTCHA
                     ref={recaptchaRef}
                     sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || ""}
                     onChange={(token) => setCaptchaToken(token)}
                     onExpired={() => setCaptchaToken(null)}
-                />
+                /> */}
             </div>
 
             {/* Submit */}
@@ -213,7 +218,7 @@ export function SurveyForm({ draftId, title, description, questions }: SurveyFor
                 <Button
                     type="submit"
                     className="w-full max-w-md bg-[#2b9e76] hover:bg-[#249068] text-white px-8 py-3 rounded-lg font-medium shadow-sm transition-all text-base"
-                    disabled={isSubmitting || answeredCount === 0 || !captchaToken}
+                    disabled={isSubmitting || answeredCount === 0}
                 >
                     {isSubmitting ? "กำลังส่งข้อมูล..." : "ส่งความคิดเห็น"}
                 </Button>

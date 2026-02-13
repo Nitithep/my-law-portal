@@ -4,6 +4,8 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DeleteDraftButton } from "@/components/admin/DeleteDraftButton";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminPage() {
     const drafts = await prisma.lawDraft.findMany({
         orderBy: { createdAt: "desc" },
@@ -15,6 +17,13 @@ export default async function AdminPage() {
                 include: {
                     _count: {
                         select: { votes: true, comments: true },
+                    },
+                },
+            },
+            surveyQuestions: {
+                include: {
+                    _count: {
+                        select: { responses: true },
                     },
                 },
             },
@@ -35,6 +44,10 @@ export default async function AdminPage() {
         (acc, d) => acc + d.sections.reduce((a, s) => a + s._count.comments, 0),
         0
     );
+    const totalSurveyAnswers = drafts.reduce(
+        (acc, d) => acc + d.surveyQuestions.reduce((a, q) => a + q._count.responses, 0),
+        0
+    );
 
     return (
         <div className="space-y-6">
@@ -47,7 +60,7 @@ export default async function AdminPage() {
             </div>
 
             {/* Stat cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                 <AdminStatCard
                     color="blue"
                     label="ร่างทั้งหมด"
@@ -100,6 +113,17 @@ export default async function AdminPage() {
                     icon={
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                    }
+                />
+                <AdminStatCard
+                    color="teal"
+                    label="แบบสอบถาม"
+                    value={totalSurveyAnswers}
+                    subtitle="Survey Answers"
+                    icon={
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                         </svg>
                     }
                 />
@@ -214,6 +238,9 @@ export default async function AdminPage() {
                                     ความเห็น
                                 </th>
                                 <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+                                    แบบสอบถาม
+                                </th>
+                                <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">
                                     จัดการ
                                 </th>
                             </tr>
@@ -226,6 +253,10 @@ export default async function AdminPage() {
                                 );
                                 const draftComments = draft.sections.reduce(
                                     (acc, s) => acc + s._count.comments,
+                                    0
+                                );
+                                const draftSurveyAnswers = draft.surveyQuestions.reduce(
+                                    (acc, q) => acc + q._count.responses,
                                     0
                                 );
                                 return (
@@ -274,6 +305,11 @@ export default async function AdminPage() {
                                                 {draftComments}
                                             </span>
                                         </td>
+                                        <td className="py-3.5 px-4 text-center">
+                                            <span className="text-xs font-semibold text-teal-600">
+                                                {draftSurveyAnswers}
+                                            </span>
+                                        </td>
                                         <td className="py-3.5 px-4">
                                             <div className="flex items-center justify-center gap-1.5">
                                                 <Link
@@ -283,6 +319,15 @@ export default async function AdminPage() {
                                                 >
                                                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                                                         <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </Link>
+                                                <Link
+                                                    href={`/admin/drafts/${draft.id}/edit?tab=responses`}
+                                                    className="h-8 w-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors"
+                                                    title="ดูผู้ตอบแบบสอบถาม"
+                                                >
+                                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                                     </svg>
                                                 </Link>
                                                 <DeleteDraftButton draftId={draft.id} title={draft.title} />

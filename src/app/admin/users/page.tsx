@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { UserRow } from "@/components/admin/UserRow";
 
 export default async function AdminUsersPage() {
     const users = await prisma.user.findMany({
@@ -39,53 +40,15 @@ export default async function AdminUsersPage() {
                                 <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">
                                     ความเห็น
                                 </th>
+                                <th className="text-center py-3 px-4 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+                                    จัดการ
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             {users.map((user) => (
-                                <tr key={user.id} className="hover:bg-blue-50/30 transition-colors">
-                                    <td className="py-3.5 px-5">
-                                        <div className="flex items-center gap-3">
-                                            {user.image ? (
-                                                <img
-                                                    src={user.image}
-                                                    alt=""
-                                                    className="h-8 w-8 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
-                                                    {user.name?.charAt(0) || "?"}
-                                                </div>
-                                            )}
-                                            <span className="font-medium text-gray-800">
-                                                {user.name || "ไม่ระบุชื่อ"}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="py-3.5 px-4 text-gray-500 text-xs">
-                                        {user.email}
-                                    </td>
-                                    <td className="py-3.5 px-4 text-center">
-                                        <span
-                                            className={`inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full ${user.role === "ADMIN"
-                                                    ? "bg-amber-100 text-amber-700 border border-amber-200"
-                                                    : "bg-gray-100 text-gray-500 border border-gray-200"
-                                                }`}
-                                        >
-                                            {user.role === "ADMIN" ? "Admin" : "Citizen"}
-                                        </span>
-                                    </td>
-                                    <td className="py-3.5 px-4 text-center">
-                                        <span className="text-xs font-semibold text-purple-600">
-                                            {user._count.votes}
-                                        </span>
-                                    </td>
-                                    <td className="py-3.5 px-4 text-center">
-                                        <span className="text-xs font-semibold text-rose-500">
-                                            {user._count.comments}
-                                        </span>
-                                    </td>
-                                </tr>
+                                // @ts-ignore - Prisma enum vs string literal mismatch
+                                <UserRow key={user.id} user={user} />
                             ))}
                         </tbody>
                     </table>

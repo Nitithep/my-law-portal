@@ -139,6 +139,7 @@ export function DraftTabs({ draft, isOpen }: DraftTabsProps) {
                         draftTitle={draft.title}
                         sections={draft.sections}
                         attachments={draft.attachments || []}
+                        isOpen={isOpen}
                     />
                 )}
 
