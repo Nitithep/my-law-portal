@@ -15,15 +15,18 @@ const draftTypeOptions = [
     { label: "ประเมินผลสัมฤทธิ์", value: "evaluation" },
 ];
 
-export function LawFilterSidebar({ agencies = [] }: { agencies?: string[] }) {
+export function LawFilterSidebar({ agencies = [], categories = [] }: { agencies?: string[], categories?: string[] }) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isPending, startTransition] = useTransition();
 
     const activeStatus = searchParams.get("status") || "";
     const activeAgency = searchParams.get("agency") || "";
+    const activeCategory = searchParams.get("category") || "";
     const activeDept = searchParams.get("dept") || "";
     const activeType = searchParams.get("type") || "";
+    const activeFrom = searchParams.get("from") || "";
+    const activeTo = searchParams.get("to") || "";
 
     const handleFilter = (key: string, value: string) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -44,7 +47,7 @@ export function LawFilterSidebar({ agencies = [] }: { agencies?: string[] }) {
         });
     };
 
-    const hasActiveFilters = activeStatus || activeAgency || activeDept || activeType;
+    const hasActiveFilters = activeStatus || activeAgency || activeDept || activeType || activeCategory || activeFrom || activeTo;
 
     return (
         <div className={`bg-white rounded-2xl border border-gray-100 p-5 sticky top-24 ${isPending ? "opacity-70 pointer-events-none" : ""}`}>
@@ -83,6 +86,30 @@ export function LawFilterSidebar({ agencies = [] }: { agencies?: string[] }) {
                     activeValue={activeAgency}
                     onChange={(v) => handleFilter("agency", v)}
                 />
+                <FilterGroup
+                    label="หมวดหมู่"
+                    options={["ทั้งหมด", ...categories]}
+                    values={["", ...categories]}
+                    activeValue={activeCategory}
+                    onChange={(v) => handleFilter("category", v)}
+                />
+                <div className="space-y-2">
+                    <label className="block text-xs font-medium text-gray-500 ml-1">ช่วงเวลาที่เปิดรับฟัง</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        <input
+                            type="date"
+                            className="bg-white border border-gray-200 text-gray-700 text-xs rounded-xl px-3 py-2 w-full outline-none focus:border-[#1a3c7b]"
+                            value={activeFrom}
+                            onChange={(e) => handleFilter("from", e.target.value)}
+                        />
+                        <input
+                            type="date"
+                            className="bg-white border border-gray-200 text-gray-700 text-xs rounded-xl px-3 py-2 w-full outline-none focus:border-[#1a3c7b]"
+                            value={activeTo}
+                            onChange={(e) => handleFilter("to", e.target.value)}
+                        />
+                    </div>
+                </div>
                 <FilterGroup
                     label="กรม"
                     options={["ทั้งหมด"]}

@@ -1,34 +1,39 @@
-import Link from "next/link";
+import { HeroBanner } from "./HeroBanner";
+import { Banner } from "@prisma/client";
 
-export function LawHero() {
+export function LawHero({ banners = [] }: { banners?: Banner[] }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
-            {/* Banner 1: Law Reform Guidelines (Brown) */}
-            <div className="md:col-span-5 relative overflow-hidden rounded-2xl bg-[#a07963] text-white p-6 flex flex-col justify-center min-h-[160px] group cursor-pointer shadow-sm hover:shadow-md transition-all">
-                <div className="absolute right-0 bottom-0 opacity-20 transform translate-x-1/4 translate-y-1/4">
-                    <svg className="w-48 h-48" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" />
-                        <path d="M14 3v5h5" />
-                        <path d="M16 13H8" />
-                        <path d="M16 17H8" />
-                        <path d="M10 9H8" />
-                    </svg>
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-2">
-                        <span className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </span>
-                        <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shadow-sm">
-                            New
-                        </span>
+            {/* Banner 1: Dynamic Carousel */}
+            {banners.length > 0 ? (
+                <HeroBanner banners={banners} />
+            ) : (
+                <div className="md:col-span-5 relative overflow-hidden rounded-2xl bg-[#a07963] text-white p-6 flex flex-col justify-center min-h-[160px] group cursor-pointer shadow-sm hover:shadow-md transition-all">
+                    <div className="absolute right-0 bottom-0 opacity-20 transform translate-x-1/4 translate-y-1/4">
+                        <svg className="w-48 h-48" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" />
+                            <path d="M14 3v5h5" />
+                            <path d="M16 13H8" />
+                            <path d="M16 17H8" />
+                            <path d="M10 9H8" />
+                        </svg>
                     </div>
-                    <p className="text-sm font-medium opacity-90 mb-0.5">ครม. มีมติเมื่อวันที่ 21 ก.ค. 63 เห็นชอบ</p>
-                    <h2 className="text-2xl font-bold tracking-tight">แนวทางการปฏิรูปกฎหมาย</h2>
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                            <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shadow-sm">
+                                New
+                            </span>
+                        </div>
+                        <p className="text-sm font-medium opacity-90 mb-0.5">ครม. มีมติเมื่อวันที่ 21 ก.ค. 63 เห็นชอบ</p>
+                        <h2 className="text-2xl font-bold tracking-tight">แนวทางการปฏิรูปกฎหมาย</h2>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Banner 2: Search Promo (Blue) */}
             <div className="md:col-span-4 relative overflow-hidden rounded-2xl bg-[#cfebfb] text-[#1a3c7b] p-6 flex flex-col justify-center min-h-[160px] group cursor-pointer shadow-sm hover:shadow-md transition-all">

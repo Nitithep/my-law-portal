@@ -5,10 +5,33 @@ import { DraftTabs } from "@/components/DraftTabs";
 import { ConsentModal } from "@/components/drafts/ConsentModal";
 import { HearingSummaryModal } from "@/components/drafts/HearingSummaryModal";
 import Link from "next/link";
+import { Metadata } from "next";
+import { ShareButton } from "@/components/ShareButton";
 
 type PageProps = {
     params: Promise<{ id: string }>;
 };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+    const { id } = await params;
+    const draft = await prisma.lawDraft.findUnique({ where: { id } });
+
+    if (!draft) {
+        return {
+            title: "ไม่พบข้อมูลร่างกฎหมาย",
+        };
+    }
+
+    return {
+        title: draft.title,
+        description: draft.description,
+        openGraph: {
+            title: draft.title,
+            description: draft.description,
+            images: draft.image ? [draft.image] : [],
+        },
+    };
+}
 
 export default async function DraftDetailPage({ params }: PageProps) {
     const { id } = await params;
@@ -159,14 +182,10 @@ export default async function DraftDetailPage({ params }: PageProps) {
                                 </div>
                                 {/* Share & Favorite buttons */}
                                 <div className="flex items-center gap-2 flex-shrink-0">
-                                    <button
-                                        className="p-2.5 rounded-full border border-gray-200 text-gray-400 hover:text-[#1a3c7b] hover:border-[#1a3c7b]/30 hover:bg-blue-50 transition-all"
-                                        title="แชร์"
-                                    >
-                                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-                                        </svg>
-                                    </button>
+                                    <ShareButton
+                                        title={draft.title}
+                                        url={`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/drafts/${id}`}
+                                    />
                                     <button
                                         className="p-2.5 rounded-full border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all"
                                         title="บันทึก"

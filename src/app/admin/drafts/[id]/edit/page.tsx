@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SurveyResponseTable } from "@/components/admin/SurveyResponseTable";
-import { AdminCommentList } from "@/components/admin/AdminCommentList";
+import AdminCommentList from "@/components/admin/AdminCommentList";
+import DraftCommentManager from "@/components/admin/DraftCommentManager";
 import {
     updateLawDraft,
     addSection,
@@ -698,7 +699,7 @@ export default function EditDraftPage() {
                 {/* Tab: comments */}
                 {activeTab === "comments" && (
                     <div className="p-6">
-                        <AdminCommentList draftId={draft.id} />
+                        <DraftCommentManager draftId={draft.id} />
                     </div>
                 )}
 

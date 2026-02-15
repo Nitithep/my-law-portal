@@ -1,14 +1,27 @@
 import { prisma } from "@/lib/db";
+import { getBanners } from "@/actions/banner-actions";
 import { Suspense } from "react";
 import { LawHero } from "@/components/LawHero";
 import { LawSearchBar } from "@/components/LawSearchBar";
 import { LawFilterSidebar } from "@/components/LawFilterSidebar";
 import { DraftCard } from "@/components/DraftCard";
+import { LawDraft } from "@prisma/client";
+
+type DraftWithCounts = LawDraft & {
+  totalVotes: number;
+  totalComments: number;
+  _count: {
+    sections: number;
+  };
+};
 
 type SearchParams = Promise<{
   q?: string;
   status?: string;
   agency?: string;
+  category?: string;
+  from?: string;
+  to?: string;
   sort?: string;
 }>;
 
@@ -16,9 +29,12 @@ async function getDrafts(searchParams: {
   q?: string;
   status?: string;
   agency?: string;
+  category?: string;
+  from?: string;
+  to?: string;
   sort?: string;
-}) {
-  const { q, status, agency, sort } = searchParams;
+}): Promise<DraftWithCounts[]> {
+  const { q, status, agency, category, from, to, sort } = searchParams;
 
   // Build where clause
   const where: Record<string, unknown> = {};
@@ -37,6 +53,29 @@ async function getDrafts(searchParams: {
 
   if (agency) {
     where.agency = agency;
+  }
+
+  if (category) {
+    where.category = category;
+  }
+
+  if (from || to) {
+    where.items = {
+      // We want drafts that overlap with the selected range or start within it
+      // Simpler: Created within range
+      createdAt: {
+        gte: from ? new Date(from) : undefined,
+        lte: to ? new Date(to) : undefined,
+      },
+    };
+    // Actually, usually user wants "Active during this time" or "Created this time".
+    // Let's go with "Effective Date (startDate/endDate)" overlap or just "Created/Updated".
+    // Implementation: "Created At" is easiest for "News". "Status" covers active.
+    // Let's use createdAt for now.
+    where.createdAt = {
+      gte: from ? new Date(from) : undefined,
+      lte: to ? new Date(to) : undefined,
+    }
   }
 
   // Build orderBy
@@ -94,22 +133,33 @@ async function getAgencies() {
   return result.map((r) => r.agency);
 }
 
+async function getCategories() {
+  const result = await prisma.lawDraft.findMany({
+    select: { category: true },
+    distinct: ["category"],
+    orderBy: { category: "asc" },
+  });
+  return result.map((r) => r.category);
+}
+
 export default async function HomePage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
-  const [drafts, agencies] = await Promise.all([
+  const [drafts, agencies, categories, banners] = await Promise.all([
     getDrafts(params),
     getAgencies(),
+    getCategories(),
+    getBanners(),
   ]);
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 pb-20">
       <div className="container mx-auto px-4 py-6">
         {/* Banner Section */}
-        <LawHero />
+        <LawHero banners={banners} />
 
         {/* Search Section */}
         <Suspense fallback={<div className="h-32 bg-gray-50 rounded-2xl animate-pulse mb-10" />}>
@@ -133,13 +183,9 @@ export default async function HomePage({
                   sectionCount={draft._count.sections}
                   voteCount={draft.totalVotes}
                   commentCount={draft.totalComments}
-                  // @ts-ignore
                   category={draft.category}
-                  // @ts-ignore
                   draftType={draft.draftType}
-                  // @ts-ignore
                   hearingRound={draft.hearingRound}
-                  // @ts-ignore
                   image={draft.image}
                 />
               ))
@@ -159,7 +205,7 @@ export default async function HomePage({
           {/* Right: Filter Sidebar */}
           <div className="hidden lg:block lg:col-span-3">
             <Suspense fallback={<div className="bg-white h-64 rounded-2xl border border-gray-100 animate-pulse" />}>
-              <LawFilterSidebar agencies={agencies} />
+              <LawFilterSidebar agencies={agencies} categories={categories as string[]} />
             </Suspense>
 
             {/* Floating Action Button (Scroll to top) - Visual match */}

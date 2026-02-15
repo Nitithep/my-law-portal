@@ -5,6 +5,7 @@ import { SurveyForm } from "@/components/drafts/SurveyForm";
 import { ContactTab } from "@/components/drafts/ContactTab";
 import { DraftLawTab } from "@/components/drafts/DraftLawTab";
 import { HearingSummaryModal } from "@/components/drafts/HearingSummaryModal";
+import { AISummary } from "@/components/AISummary";
 
 type Tab = "info" | "sections" | "survey" | "contact";
 
@@ -93,6 +94,10 @@ export function DraftTabs({ draft, isOpen }: DraftTabsProps) {
                                     {draft.title}
                                 </p>
                             </div>
+                        </section>
+
+                        <section>
+                            <AISummary draftId={draft.id} />
                         </section>
 
                         {draft.affectedParties && (

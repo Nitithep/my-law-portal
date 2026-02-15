@@ -7,7 +7,11 @@ import { compare } from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: PrismaAdapter(prisma),
-    session: { strategy: "jwt" },
+    session: {
+        strategy: "jwt",
+        maxAge: 24 * 60 * 60, // 24 hours
+        updateAge: 60 * 60, // 1 hour
+    },
     providers: [
         Google({
             clientId: process.env.AUTH_GOOGLE_ID!,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { getSurveyResponses, SurveyResponseResult } from "@/actions/admin-actions";
 
 export function SurveyResponseTable({ draftId }: { draftId: string }) {
@@ -93,9 +93,8 @@ export function SurveyResponseTable({ draftId }: { draftId: string }) {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {responses.map((r, idx) => (
-                            <>
+                            <Fragment key={r.sessionId}>
                                 <tr
-                                    key={r.sessionId}
                                     onClick={() => toggleExpand(r.sessionId)}
                                     className={`cursor-pointer hover:bg-blue-50/30 transition-colors ${expanded === r.sessionId ? "bg-blue-50/50" : ""}`}
                                 >
@@ -161,7 +160,7 @@ export function SurveyResponseTable({ draftId }: { draftId: string }) {
                                         </td>
                                     </tr>
                                 )}
-                            </>
+                            </Fragment>
                         ))}
                     </tbody>
                 </table>

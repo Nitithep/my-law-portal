@@ -56,6 +56,7 @@ model User {
   votes         Vote[]
   comments      Comment[]
   surveyResponses SurveyResponse[]
+  notifications Notification[]
 }
 
 model LawDraft {
@@ -123,6 +124,7 @@ model Comment {
   section   LawSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   createdAt DateTime   @default(now())
   images    String[]
+  status    CommentStatus @default(APPROVED)
 }
 
 model SurveyQuestion {
@@ -163,4 +165,32 @@ enum LawStatus {
 enum VoteType {
   AGREE
   DISAGREE
+}
+
+enum CommentStatus {
+  APPROVED
+  HIDDEN
+  FLAGGED
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  title       String? // Optional because some banners might just be images
+  image       String   // URL
+  link        String?  // Optional link
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
